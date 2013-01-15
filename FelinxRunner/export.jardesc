@@ -11,10 +11,8 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/FelinxRunner/.classpath"/>
-        <file path="/FelinxRunner/.project"/>
-        <file path="/FelinxRunner/export.jardesc"/>
-        <folder path="/FelinxRunner/lib"/>
+        <file path="/FelinxRunner/LICENSE"/>
         <javaElement handleIdentifier="=FelinxRunner/src"/>
+        <folder path="/FelinxRunner/lib"/>
     </selectedElements>
 </jardesc>

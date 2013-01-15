@@ -22,11 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.DebugPlugin;
@@ -35,38 +33,31 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
-import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.jerry.felinx.plugin.Activator;
 
+/**
+ * Creates a launcher object that can be used to launch the OSGi framework in a separate JVM.
+ * @author Michiel Vermandel
+ *
+ */
 public class Launcher {
 
-	public static void main(String[] args) {
-		new Launcher().launch(ILaunchManager.DEBUG_MODE);
-	}
-
+	/**
+	 * Instantiates a new launcher.
+	 */
 	public Launcher() {
 
 	}
 
 	/**
+	 * Creates a LaunchConfiguration and launches it in the specified launchMode.
 	 * @param launchMode
 	 *            : ILaunchManager.RUN_MODE | ILaunchManager.DEBUG_MODE | ILaunchManager.PROFILE_MODE
 	 */
-	public void launch2(String launchMode) {
-		try {
-			DebugUITools.launch(createConfiguration(null, null), launchMode);
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	public void launch(String launchMode) {
 		try {
 
@@ -80,7 +71,8 @@ public class Launcher {
 			IPath runnerPath = new Path(delegateLocation.getPath());
 
 			// -------FelixRunner.jar------------
-			runnerPath = new Path("C:\\Data\\incubator\\CMv3\\workspace\\FelixRunner\\target\\FelixRunner.jar");
+			//TODO: remove hard link to FelinxRunner.jar (Issue 1)
+			runnerPath = new Path("C:\\Data\\incubator\\CMv3\\workspace\\FelinxRunner\\target\\FelinxRunner.jar");
 			IRuntimeClasspathEntry runnerEntry = JavaRuntime.newArchiveRuntimeClasspathEntry(runnerPath);
 			runnerEntry.setClasspathProperty(IRuntimeClasspathEntry.USER_CLASSES);
 			// -------OSGI Framework.jar------------
@@ -113,53 +105,16 @@ public class Launcher {
 			}
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_SOURCE_PATH, sourceLookupPath);
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_DEFAULT_SOURCE_PATH, false);
-			// for JMX remoting
+			//-- >> for JMX remoting (see JMXClient.java)
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, "-Dcom.sun.management.jmxremote.port="
 					+ Activator.JMX_PORT + " -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false");
-
-			// wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "org.jerry.eclipseplugin.launch.LaunchDelegate");
+			//-- << for JMX remoting
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "org.jerry.runner.FrameworkRunner");
 			ILaunchConfiguration config = wc.doSave();
 			ILaunch launch = config.launch(launchMode, null);
 			Activator.setActiveLaunch(launch);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
-	protected ILaunchConfigurationWorkingCopy createConfiguration(IProject project, IPath targetPath) throws CoreException {
-		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-		// ILaunchConfigurationType configType = manager.getLaunchConfigurationType(IJavaLaunchConfigurationConstants.ID_JAVA_APPLICATION);
-		ILaunchConfigurationType configType = manager.getLaunchConfigurationType(LaunchConstants.LAUNCH_CONFIG_TYPE);
-
-		ILaunchConfigurationWorkingCopy wc;
-		wc = configType.newInstance(null, "temp");
-		wc.setAttribute(LaunchConstants.ATTR_CLEAN, LaunchConstants.DEFAULT_CLEAN);
-		wc.setAttribute(LaunchConstants.ATTR_DYNAMIC_BUNDLES, LaunchConstants.DEFAULT_DYNAMIC_BUNDLES);
-		IVMInstall vm = JavaRuntime.getVMInstall((IJavaProject) project);
-		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_INSTALL_TYPE, vm.getVMInstallType().getId());
-		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_INSTALL_NAME, vm.getName());
-
-		// wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "org.jerry.eclipseplugin.launch.LaunchDelegate");
-
-		if (targetPath != null) {
-			wc.setAttribute(LaunchConstants.ATTR_LAUNCH_TARGET, targetPath.toString());
-			IResource targetResource = ResourcesPlugin.getWorkspace().getRoot().findMember(targetPath);
-			if (targetResource != null && targetResource.exists()) {
-				wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, project.getName());
-			}
-		}
-		/*
-		 * Andere props: // customize the classpath wc.setAttribute(IJavaLaunchConfigurationConstants .ATTR_DEFAULT_CLASSPATH, false);
-		 * wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_CLASSPATH, classPathList);
-		 * wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, projectName);
-		 * wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME , targetMainClass);
-		 * wc.setAttribute(IJavaLaunchConfigurationConstants. ATTR_PROGRAM_ARGUMENTS, programArgs);
-		 * wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, jvmArgs);
-		 */
-
-		return wc;
-	}
-
 }

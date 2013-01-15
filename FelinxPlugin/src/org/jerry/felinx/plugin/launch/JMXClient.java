@@ -18,8 +18,6 @@
 package org.jerry.felinx.plugin.launch;
 
 import java.io.File;
-import java.net.SocketException;
-import java.rmi.UnmarshalException;
 import java.util.Hashtable;
 
 import javax.management.MBeanServerConnection;
@@ -27,8 +25,6 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-
-import org.apache.felix.main.Main;
 
 public class JMXClient {
 
