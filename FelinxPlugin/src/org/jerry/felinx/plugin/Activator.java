@@ -1,6 +1,6 @@
 /**
  *  Felinx - Integration link between Felix and Eclipse
-    Copyright (C) <year>  <name of author>
+    Copyright (C) 2013  Michiel Vermandel
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ import org.osgi.framework.launch.Framework;
 public class Activator extends AbstractUIPlugin implements BundleListener, ServiceListener {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "FelixPlugin"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "FelinxPlugin"; //$NON-NLS-1$
 
 	public static Framework framework = null;
 
@@ -76,7 +76,7 @@ public class Activator extends AbstractUIPlugin implements BundleListener, Servi
 		super.start(context);
 		plugin = this;
 		console = new PluginConsole("OSGiFramework", null);
-		System.out.println("Starting FelixPlugin");
+		System.out.println("Starting FelinxPlugin");
 	}
 
 	/*
