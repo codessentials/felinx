@@ -56,8 +56,10 @@ public class FrameworkRunner {
 
 	/**
 	 * @param args
+	 *            This main is called from org.jerry.felinx.plugin.launch.Launcher
 	 */
 	public static void main(String[] args) {
+		System.out.println("FrameworkRunner v1.0.0.SNAPSHOT");
 		MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 		RunnerShell shell = new RunnerShell();
 		ObjectName shellObjectName;
@@ -71,8 +73,19 @@ public class FrameworkRunner {
 		}
 
 		Debug.enabled = true;
-		frameworkLocation = "C:/Data/incubator/CMv3/workspace/_FelixServer";
-		System.out.println("Hello from FelixRunner!!");
+		frameworkLocation = System.getenv("FELIX_HOME");
+		for(String arg : args){
+			System.out.println(arg);
+			if (arg.startsWith("FELIX_HOME=")){
+				// %20 => spaces get replaced by %20 when passing program arguments
+				frameworkLocation = arg.substring(11).replace("%20", " ");
+			}
+		}
+		if (frameworkLocation == null) {
+			System.out.println("Environment variable FELIX_HOME not set!");
+			frameworkLocation = "C:\\Data\\tools\\felix-framework-4.0.3 - FlowBeans";
+		}
+		System.out.println("Felinx FrameworkRunner: FELIX HOME = " + frameworkLocation);
 		boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString()
 				.indexOf("-agentlib:jdwp") > 0;
 		System.out.println("Debug: " + isDebug);
@@ -103,6 +116,16 @@ public class FrameworkRunner {
 				framework.start();
 				// CommandProcessor cmdprc = new CommandProcessor(framework.getBundleContext());
 				// cmdprc.start();
+				//check if gogo is geïnstalleerd
+				boolean gogoShellInstalled=false;
+				for (Bundle bundle: framework.getBundleContext().getBundles()){
+					if ("org.apache.felix.gogo.shell".equals(bundle.getSymbolicName())){
+						gogoShellInstalled=true;
+					}
+				}
+				if (!gogoShellInstalled){
+					System.out.println("WARNING: gogo shell is not installed, cannot handle commands.");
+				}
 			} else {
 				System.err.println("Could not create framework");
 			}
@@ -147,8 +170,7 @@ public class FrameworkRunner {
 		throw new Exception("Could not find framework factory.");
 	}
 
-	public void updateBundle(String aSymbolicName, String aVersion, File aBundleToInstall) throws FileNotFoundException,
-			BundleException {
+	public void updateBundle(String aSymbolicName, String aVersion, File aBundleToInstall) throws FileNotFoundException, BundleException {
 		System.out.println("Updating " + aSymbolicName + "... ");
 		/** find bundle */
 		Bundle bundle = null;
@@ -164,7 +186,7 @@ public class FrameworkRunner {
 			}
 			InputStream stream = new FileInputStream(aBundleToInstall);
 			if (bundle == null) {
-				System.out.println("Bundle does not exist yet. Will install " + aSymbolicName + " " + aVersion);
+				System.out.println("Bundle does not exist yet. Will install " + aSymbolicName + " " + aVersion + " ["+aBundleToInstall.getAbsolutePath()+"]");
 				bundle = framework.getBundleContext().installBundle(aBundleToInstall.getAbsolutePath(), stream);
 			} else {
 				bundle.stop();
