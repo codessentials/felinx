@@ -17,6 +17,7 @@
  */
 package org.jerry.felinx.plugin.launch;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +42,9 @@ import org.jerry.felinx.plugin.Activator;
 
 /**
  * Creates a launcher object that can be used to launch the OSGi framework in a separate JVM.
+ * 
  * @author Michiel Vermandel
- *
+ * 
  */
 public class Launcher {
 
@@ -55,6 +57,7 @@ public class Launcher {
 
 	/**
 	 * Creates a LaunchConfiguration and launches it in the specified launchMode.
+	 * 
 	 * @param launchMode
 	 *            : ILaunchManager.RUN_MODE | ILaunchManager.DEBUG_MODE | ILaunchManager.PROFILE_MODE
 	 */
@@ -68,19 +71,23 @@ public class Launcher {
 
 			/** create launch class path */
 			URL delegateLocation = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
-			IPath runnerPath = new Path(delegateLocation.getPath());
+			IPath libPath = new Path(delegateLocation.getPath());
+			libPath = libPath.removeLastSegments(1);// remove file name => get folder
+			libPath = libPath.append("FelinxPlugin").append("lib");
+			System.out.println("lib location: " + libPath.toString());
 
 			// -------FelixRunner.jar------------
-			//TODO: remove hard link to FelinxRunner.jar (Issue 1)
-			runnerPath = new Path("C:\\Data\\incubator\\CMv3\\workspace\\FelinxRunner\\target\\FelinxRunner.jar");
+			// TODO: remove hard link to FelinxRunner.jar (Issue 1)
+			String felinxRunnerPath = libPath.append("FelinxRunner.jar").toString();
+			IPath runnerPath = new Path(felinxRunnerPath);
 			IRuntimeClasspathEntry runnerEntry = JavaRuntime.newArchiveRuntimeClasspathEntry(runnerPath);
 			runnerEntry.setClasspathProperty(IRuntimeClasspathEntry.USER_CLASSES);
 			// -------OSGI Framework.jar------------
-			IPath frameworkPath = new Path("C:\\Data\\incubator\\CMv3\\workspace\\FelixRunner\\target\\felix.jar");
+			IPath frameworkPath = new Path(libPath.append("felix.jar").toString());
 			IRuntimeClasspathEntry frameworkEntry = JavaRuntime.newArchiveRuntimeClasspathEntry(frameworkPath);
 			frameworkEntry.setClasspathProperty(IRuntimeClasspathEntry.USER_CLASSES);
 			// -------JMX Tools.jar------------
-			IPath jmxToolsPath = new Path("C:\\Data\\incubator\\CMv3\\workspace\\FelixRunner\\target\\tools.jar");
+			IPath jmxToolsPath = new Path(libPath.append("tools.jar").toString());
 			IRuntimeClasspathEntry jmxToolsEntry = JavaRuntime.newArchiveRuntimeClasspathEntry(jmxToolsPath);
 			jmxToolsEntry.setClasspathProperty(IRuntimeClasspathEntry.USER_CLASSES);
 			// -------JRE------------
@@ -98,6 +105,16 @@ public class Launcher {
 			// --------Build Sourcepath -----
 			IWorkspace workspace = ResourcesPlugin.getWorkspace();
 			IWorkspaceRoot root = workspace.getRoot();
+			/**>>> use main args[] to pass FELIX_HOME */
+			URI FELIX_HOME_URI = workspace.getPathVariableManager().getURIValue("FELIX_HOME");
+			if (FELIX_HOME_URI != null) {
+				String FELIX_HOME = workspace.getPathVariableManager().getURIValue("FELIX_HOME").getRawPath();
+				System.out.println("Setting FELIX_HOME to "+FELIX_HOME);
+				wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS, "FELIX_HOME=" + FELIX_HOME);
+			} else {
+				System.out.println("FELIX_HOME not set!");
+			}
+			/**<<< use main args[] to pass FELIX_HOME */
 			List<String> sourceLookupPath = new ArrayList<String>();
 			for (IProject project : root.getProjects()) {
 				IRuntimeClasspathEntry projectSourcePath = JavaRuntime.newProjectRuntimeClasspathEntry(JavaCore.create(project));
@@ -105,11 +122,11 @@ public class Launcher {
 			}
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_SOURCE_PATH, sourceLookupPath);
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_DEFAULT_SOURCE_PATH, false);
-			//-- >> for JMX remoting (see JMXClient.java)
+			// -- >> for JMX remoting (see JMXClient.java)
 			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, "-Dcom.sun.management.jmxremote.port="
 					+ Activator.JMX_PORT + " -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false");
-			//-- << for JMX remoting
-			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "org.jerry.runner.FrameworkRunner");
+			// -- << for JMX remoting
+			wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "org.jerry.felinx.runner.FrameworkRunner");
 			ILaunchConfiguration config = wc.doSave();
 			ILaunch launch = config.launch(launchMode, null);
 			Activator.setActiveLaunch(launch);

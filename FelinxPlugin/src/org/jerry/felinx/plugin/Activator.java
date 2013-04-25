@@ -60,11 +60,16 @@ public class Activator extends AbstractUIPlugin implements BundleListener, Servi
 
 	public static final String IMAGE_RUN = "run";
 	public static final String IMAGE_DEBUG = "debug";
+	
+	public static void main(String[] args) {
+		new Activator();
+	}
 
 	/**
 	 * The constructor
 	 */
 	public Activator() {
+
 	}
 
 	/*
@@ -76,7 +81,7 @@ public class Activator extends AbstractUIPlugin implements BundleListener, Servi
 		super.start(context);
 		plugin = this;
 		console = new PluginConsole("OSGiFramework", null);
-		System.out.println("Starting FelinxPlugin");
+		System.out.println("Starting FelinxPlugin 1.0.2.SNAPSHOT");
 	}
 
 	/*
@@ -194,3 +199,4 @@ public class Activator extends AbstractUIPlugin implements BundleListener, Servi
 		activeLaunch = launch;
 	}
 }
+

@@ -17,6 +17,7 @@
  */
 package org.jerry.felinx.plugin.builder;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,20 +27,20 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IProjectNature;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.IAccessRule;
-import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.jerry.felinx.plugin.launch.Launcher;
 
 public class OSGiBundleNature implements IProjectNature {
 
 	/**
 	 * ID of this project nature
 	 */
-	public static final String NATURE_ID = "FelixPlugin.OSGiBundleNature";
+	public static final String NATURE_ID = "FelinxPlugin.OSGiBundleNature";
 
 	private IProject project;
 
@@ -54,6 +55,7 @@ public class OSGiBundleNature implements IProjectNature {
 
 		for (int i = 0; i < commands.length; ++i) {
 			if (commands[i].getBuilderName().equals(BundleBuilder.BUILDER_ID)) {
+				System.out.println("Already has nature "+BundleBuilder.BUILDER_ID);
 				return;
 			}
 		}
@@ -68,7 +70,14 @@ public class OSGiBundleNature implements IProjectNature {
 		IJavaProject javaProject = JavaCore.create(project);
 		List<IClasspathEntry> classpathEntries = new ArrayList<IClasspathEntry>();
 		classpathEntries.addAll(Arrays.asList(javaProject.getRawClasspath()));
-		IClasspathEntry osgiCore = JavaCore.newLibraryEntry(new Path("C:\\Data\\incubator\\CMv3\\workspace\\_FelixServer\\bin\\Felix.jar"), null, null);
+		
+		URL delegateLocation = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
+		IPath libPath = new Path(delegateLocation.getPath());
+		libPath = libPath.removeLastSegments(1);//remove file name => get folder
+		libPath = libPath.append("FelinxPlugin").append("lib");
+		IPath frameworkPath = new Path(libPath.append("felix.jar").toString());
+		
+		IClasspathEntry osgiCore = JavaCore.newLibraryEntry(frameworkPath, null, null);
 		classpathEntries.add(osgiCore); 
 		javaProject.setRawClasspath(classpathEntries.toArray(new IClasspathEntry[classpathEntries.size()]), new NullProgressMonitor());
 	}

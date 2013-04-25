@@ -116,9 +116,9 @@ public class BundleBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	public static final String BUILDER_ID = "FelixPlugin.BundleBuilder";
+	public static final String BUILDER_ID = "FelinxPlugin.BundleBuilder";
 
-	private static final String MARKER_TYPE = "FelixPlugin.xmlProblem";
+	private static final String MARKER_TYPE = "FelinxPlugin.xmlProblem";
 
 	private SAXParserFactory parserFactory;
 
@@ -250,8 +250,13 @@ public class BundleBuilder extends IncrementalProjectBuilder {
 			}
 
 			target.close();
-			System.out.println("Installing... ");
 			File jar = new File(location.toOSString());
+			System.out.println("Performing iPOJO manipulation...");
+			IPojoManipulator man = new IPojoManipulator();
+			man.setInput(jar);
+			System.out.println("Executing...");
+			man.execute();
+			System.out.println("Installing... ");
 			String symbolicName=null;
 			String bundleVersion=null;
 			Map<Object, Object> bundleSymbolicNameAtrrs = manifest.getMainAttributes();
@@ -266,7 +271,7 @@ public class BundleBuilder extends IncrementalProjectBuilder {
 				}
 			}
 			Activator.updateBundle(symbolicName, bundleVersion, jar);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			System.err.println(e.getMessage());
 			e.printStackTrace();
 			result.setError(e);

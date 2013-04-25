@@ -2,16 +2,18 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: FelixPlugin
 Bundle-SymbolicName: FelinxPlugin;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.0.0.FINAL
 Bundle-Activator: org.jerry.felinx.plugin.Activator
-Require-Bundle: org.eclipse.ui,
+Require-Bundle: FelinxIPojoManipulator;bundle-version="1.0.0",
+ org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.pde.ui,
  org.eclipse.ui.editors
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: org.eclipse.debug.core,
+Import-Package: org.apache.felix.ipojo.manipulator,
+ org.eclipse.debug.core,
  org.eclipse.debug.core.model,
  org.eclipse.debug.ui,
  org.eclipse.jdt.core,
@@ -20,5 +22,8 @@ Import-Package: org.eclipse.debug.core,
  org.eclipse.ui.console,
  org.osgi.framework.launch;version="1.0.0"
 Bundle-ClassPath: lib/felix.jar,
+ lib/FelinxRunner.jar,
+ lib/tools.jar,
  lib/org.apache.felix.gogo.runtime-0.10.0.jar,
+ lib/org.apache.felix.ipojo.manipulator-1.8.6Custom.jar,
  .

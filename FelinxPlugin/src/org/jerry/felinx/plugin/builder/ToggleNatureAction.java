@@ -123,6 +123,8 @@ public class ToggleNatureAction implements IObjectActionDelegate {
 			description.setNatureIds(newNatures);
 			project.setDescription(description, null);
 		} catch (CoreException e) {
+			System.out.println("Failed to toggle Felinx Nature: "+e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -138,6 +140,7 @@ public class ToggleNatureAction implements IObjectActionDelegate {
 				}
 			}
 		} catch (CoreException e) {
+			System.out.println("Failed to check Felinx Nature: "+e.getMessage());
 			e.printStackTrace();
 		}
 		return hasNature;

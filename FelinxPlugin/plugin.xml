@@ -3,27 +3,27 @@
 <plugin>
 
    <extension
-         id="BundleBuilder"
+         id="FelinxPlugin.BundleBuilder"
          name="OSGi Project Builder"
          point="org.eclipse.core.resources.builders">
       <builder
             hasNature="true">
          <run
-               class="org.jerry.eclipseplugin.builder.BundleBuilder">
+               class="org.jerry.felinx.plugin.builder.BundleBuilder">
          </run>
       </builder>
    </extension>
    <extension
-         id="OSGiBundleNature"
+         id="FelinxPlugin.OSGiBundleNature"
          name="OSGi Bundle Nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
          <run
-               class="org.jerry.eclipseplugin.builder.OSGiBundleNature">
+               class="org.jerry.felinx.plugin.builder.OSGiBundleNature">
          </run>
       </runtime>
       <builder
-            id="FelixPlugin.BundleBuilder">
+            id="FelinxPlugin.BundleBuilder">
       </builder>
    </extension>
    <extension
@@ -63,7 +63,7 @@
             name="Felix Monitor"
             category="JerryPlugin"
             class="org.jerry.felinx.plugin.views.ControllerView"
-            id="org.jerry.eclipseplugin.views.ControllerView">
+            id="org.jerry.felinx.plugin.views.ControllerView">
       </view>
    </extension>
    <extension
@@ -76,7 +76,7 @@
 	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
 	    <launchConfigurationType
 		   id="jerry.launch"
-		   delegate="org.jerry.eclipseplugin.launch.LaunchDelegate"
+		   delegate="org.jerry.felinx.plugin.launch.LaunchDelegate"
 		   modes="run,debug"
 		   name="OSGi Framework Launcher"
 		   sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer">        
@@ -101,7 +101,7 @@
                         <and>
                            <test property="org.eclipse.jdt.launching.isContainer"/>
                            <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.eclipse.jdt.core.javanature"/>
-                           <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.jerry.eclipseplugin.builder.OSGiBundleNature"/>
+                           <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.jerry.felinx.plugin.builder.OSGiBundleNature"/>
                         </and>
                      </or>
                   </iterate>
