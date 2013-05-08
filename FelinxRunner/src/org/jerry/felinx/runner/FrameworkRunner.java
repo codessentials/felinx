@@ -28,8 +28,11 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -37,9 +40,12 @@ import javax.management.ObjectName;
 import org.jerry.felinx.runner.utils.Debug;
 import org.jerry.felinx.runner.utils.LaunchConfigurator;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
+import org.osgi.service.packageadmin.PackageAdmin;
 
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
@@ -74,9 +80,9 @@ public class FrameworkRunner {
 
 		Debug.enabled = true;
 		frameworkLocation = System.getenv("FELIX_HOME");
-		for(String arg : args){
+		for (String arg : args) {
 			System.out.println(arg);
-			if (arg.startsWith("FELIX_HOME=")){
+			if (arg.startsWith("FELIX_HOME=")) {
 				// %20 => spaces get replaced by %20 when passing program arguments
 				frameworkLocation = arg.substring(11).replace("%20", " ");
 			}
@@ -116,14 +122,14 @@ public class FrameworkRunner {
 				framework.start();
 				// CommandProcessor cmdprc = new CommandProcessor(framework.getBundleContext());
 				// cmdprc.start();
-				//check if gogo is geïnstalleerd
-				boolean gogoShellInstalled=false;
-				for (Bundle bundle: framework.getBundleContext().getBundles()){
-					if ("org.apache.felix.gogo.shell".equals(bundle.getSymbolicName())){
-						gogoShellInstalled=true;
+				// check if gogo is geïnstalleerd
+				boolean gogoShellInstalled = false;
+				for (Bundle bundle : framework.getBundleContext().getBundles()) {
+					if ("org.apache.felix.gogo.shell".equals(bundle.getSymbolicName())) {
+						gogoShellInstalled = true;
 					}
 				}
-				if (!gogoShellInstalled){
+				if (!gogoShellInstalled) {
 					System.out.println("WARNING: gogo shell is not installed, cannot handle commands.");
 				}
 			} else {
@@ -186,14 +192,94 @@ public class FrameworkRunner {
 			}
 			InputStream stream = new FileInputStream(aBundleToInstall);
 			if (bundle == null) {
-				System.out.println("Bundle does not exist yet. Will install " + aSymbolicName + " " + aVersion + " ["+aBundleToInstall.getAbsolutePath()+"]");
+				System.out.println("Bundle does not exist yet. Will install " + aSymbolicName + " " + aVersion + " ["
+						+ aBundleToInstall.getAbsolutePath() + "]");
 				bundle = framework.getBundleContext().installBundle(aBundleToInstall.getAbsolutePath(), stream);
 			} else {
 				bundle.stop();
 				bundle.update(stream);
+				refreshBundle(bundle, framework.getBundleContext());
 			}
-			System.out.println("Starting " + aSymbolicName + "... ");
-			bundle.start();
+			// try {
+			// //sleep a bit?
+			// Thread.sleep(500);
+			// } catch (Exception e) {
+			// //TOO BAD
+			// }
+			// re-get bundle
+
+			System.out.print("Starting " + aSymbolicName + "...");
+			boolean started = false;
+			// try bundle-start in loop because refreshBundle (PackageAdmin.refreshPackages keeps a lock on the bundle for a while after
+			// completing the refresh operation)
+			while (!started) {
+				try {
+					bundle.start();
+					started = true;
+				} catch (Exception e) {
+					try {
+						Thread.sleep(100);
+					} catch (Exception e2) {
+						System.err.println("Could not start bundle "+aSymbolicName+": "+e2.getMessage());
+						e2.printStackTrace();
+						break;
+					}
+				}
+			}
+			System.out.println(" started.");
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	public void refreshBundle(Bundle changedBundle, BundleContext context) {
+		try {
+			ServiceReference ref = context.getServiceReference(PackageAdmin.class.getName());
+			PackageAdmin pa = (ref == null) ? null : (PackageAdmin) context.getService(ref);
+			System.out.println("Refreshing bundle " + changedBundle);
+			pa.refreshPackages(new Bundle[] { changedBundle });
+		} catch (Throwable e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	public void refreshDependentBundles(Bundle changedBundle, BundleContext context) {
+		try {
+			long myId = changedBundle.getBundleId();
+			Dictionary<String, String> headers = changedBundle.getHeaders();
+
+			String exported = headers.get("Export-Package") + ",";
+			Bundle[] bundles = context.getBundles();
+			Set<Bundle> toRefresh = new HashSet<Bundle>();
+			for (int i = 0; i < bundles.length; i++) {
+				Bundle bundle = bundles[i];
+				if (bundle.getBundleId() != myId) {
+					if (!bundle.getSymbolicName().startsWith("org.apache")) {
+						Dictionary<String, String> headers2 = bundle.getHeaders();
+						String imported = headers2.get("Import-Package");
+						String[] packages = imported.split(",");
+						for (int j = 0; j < packages.length; j++) {
+							String importedPackage = packages[j].trim();
+							importedPackage = importedPackage.split(";")[0];// no version - for now
+							if (exported.contains(importedPackage)) {
+								toRefresh.add(bundle);
+							}
+						}
+					}
+				}
+			}
+			ServiceReference ref = context.getServiceReference(PackageAdmin.class.getName());
+			PackageAdmin pa = (ref == null) ? null : (PackageAdmin) context.getService(ref);
+			System.out.println(pa);
+			Bundle[] refreshList = toRefresh.toArray(new Bundle[0]);
+			for (Bundle bundleToRefresh : refreshList) {
+				System.out.println("Refreshing dependend bundle " + bundleToRefresh);
+			}
+			pa.refreshPackages(refreshList);
+		} catch (Throwable e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
